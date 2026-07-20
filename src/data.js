@@ -1,0 +1,148 @@
+export const demoUser = {
+  id: 'u-1',
+  name: 'Sarah Namusoke',
+  firstName: 'Sarah',
+  email: 'sarah.namusoke@mamacare.org',
+  role: 'VHT',
+  village: 'Kanyanya Parish',
+  initials: 'SN',
+}
+
+export function isDemoAccount(user) {
+  return user?.email?.toLowerCase() === demoUser.email.toLowerCase()
+}
+
+export const mothers = [
+  {
+    id: 'm-1',
+    name: 'Amina Nakato',
+    age: 27,
+    village: 'Kanyanya Parish',
+    phone: '+256 772 184 906',
+    gestationalWeeks: 32,
+    gravidity: 3,
+    parity: 2,
+    edd: '18 Sep 2025',
+    risk: 'High',
+    riskReason: 'Elevated blood pressure',
+    lastVisit: '02 Aug 2025',
+    nextVisit: 'Today',
+    bloodGroup: 'O+',
+    emergencyContact: 'Musa Nakato · +256 701 661 042',
+    medicalHistory: 'Previous gestational hypertension in second pregnancy.',
+    allergies: 'None known',
+    currentMedications: ['Iron & folic acid', 'Methyldopa 250mg'],
+    initials: 'AN',
+    color: 'coral',
+  },
+  {
+    id: 'm-2',
+    name: 'Grace Atim',
+    age: 23,
+    village: 'Kanyanya Parish',
+    phone: '+256 787 410 223',
+    gestationalWeeks: 24,
+    gravidity: 1,
+    parity: 0,
+    edd: '05 Nov 2025',
+    risk: 'Low',
+    riskReason: 'No concerns noted',
+    lastVisit: '19 Jul 2025',
+    nextVisit: '26 Aug 2025',
+    bloodGroup: 'A+',
+    emergencyContact: 'Peter Atim · +256 781 042 881',
+    medicalHistory: 'No significant history.',
+    allergies: 'None known',
+    currentMedications: ['Iron & folic acid'],
+    initials: 'GA',
+    color: 'sky',
+  },
+  {
+    id: 'm-3',
+    name: 'Rose Nalwanga',
+    age: 31,
+    village: 'Kanyanya Parish',
+    phone: '+256 759 422 117',
+    gestationalWeeks: 28,
+    gravidity: 4,
+    parity: 3,
+    edd: '12 Oct 2025',
+    risk: 'Moderate',
+    riskReason: 'Moderate anaemia',
+    lastVisit: '29 Jul 2025',
+    nextVisit: '28 Aug 2025',
+    bloodGroup: 'B+',
+    emergencyContact: 'David Nalwanga · +256 704 128 442',
+    medicalHistory: 'Mild anaemia noted at last visit.',
+    allergies: 'Penicillin',
+    currentMedications: ['Iron & folic acid'],
+    initials: 'RN',
+    color: 'lilac',
+  },
+  {
+    id: 'm-4',
+    name: 'Hajara Kintu',
+    age: 29,
+    village: 'Kanyanya Parish',
+    phone: '+256 702 915 533',
+    gestationalWeeks: 19,
+    gravidity: 2,
+    parity: 1,
+    edd: '16 Dec 2025',
+    risk: 'Low',
+    riskReason: 'No concerns noted',
+    lastVisit: '04 Aug 2025',
+    nextVisit: '01 Sep 2025',
+    bloodGroup: 'AB+',
+    emergencyContact: 'Sulaiman Kintu · +256 776 322 301',
+    medicalHistory: 'No significant history.',
+    allergies: 'None known',
+    currentMedications: ['Iron & folic acid'],
+    initials: 'HK',
+    color: 'mint',
+  },
+  {
+    id: 'm-5',
+    name: 'Janet Nabbosa',
+    age: 25,
+    village: 'Kanyanya Parish',
+    phone: '+256 758 882 196',
+    gestationalWeeks: 36,
+    gravidity: 2,
+    parity: 1,
+    edd: '22 Aug 2025',
+    risk: 'Moderate',
+    riskReason: 'Late pregnancy monitoring',
+    lastVisit: '01 Aug 2025',
+    nextVisit: '22 Aug 2025',
+    bloodGroup: 'O-',
+    emergencyContact: 'Joseph Nabbosa · +256 750 441 813',
+    medicalHistory: 'Previous delivery at 39 weeks.',
+    allergies: 'None known',
+    currentMedications: ['Iron & folic acid'],
+    initials: 'JN',
+    color: 'peach',
+  },
+]
+
+export const visits = [
+  { id: 'v-1', motherId: 'm-1', mother: 'Amina Nakato', date: '02 Aug 2025', gestation: '30w', bp: '148/94', pulse: '88 bpm', weight: '67.2 kg', risk: 'High', assessment: 'Possible gestational hypertension', referral: 'Referred', symptoms: 'Headache, swollen feet', initials: 'AN' },
+  { id: 'v-2', motherId: 'm-3', mother: 'Rose Nalwanga', date: '29 Jul 2025', gestation: '27w', bp: '118/76', pulse: '82 bpm', weight: '63.0 kg', risk: 'Moderate', assessment: 'Anaemia monitoring', referral: 'Routine', symptoms: 'Fatigue', initials: 'RN' },
+  { id: 'v-3', motherId: 'm-4', mother: 'Hajara Kintu', date: '04 Aug 2025', gestation: '18w', bp: '110/70', pulse: '76 bpm', weight: '58.4 kg', risk: 'Low', assessment: 'Healthy pregnancy', referral: 'Routine', symptoms: 'None reported', initials: 'HK' },
+  { id: 'v-4', motherId: 'm-2', mother: 'Grace Atim', date: '19 Jul 2025', gestation: '22w', bp: '116/74', pulse: '79 bpm', weight: '59.1 kg', risk: 'Low', assessment: 'Healthy pregnancy', referral: 'Routine', symptoms: 'Mild backache', initials: 'GA' },
+  { id: 'v-5', motherId: 'm-5', mother: 'Janet Nabbosa', date: '01 Aug 2025', gestation: '33w', bp: '126/82', pulse: '84 bpm', weight: '71.8 kg', risk: 'Moderate', assessment: 'Late pregnancy follow-up', referral: 'Routine', symptoms: 'Mild ankle swelling', initials: 'JN' },
+]
+
+export const activity = [
+  { icon: 'alert', title: 'High-risk alert recorded', text: 'Amina Nakato · BP 148/94', time: '12 min ago', tone: 'red' },
+  { icon: 'check', title: 'Visit assessment completed', text: 'Hajara Kintu · Healthy pregnancy', time: '2 hrs ago', tone: 'green' },
+  { icon: 'user', title: 'New mother registered', text: 'Janet Nabbosa added to your care list', time: 'Yesterday', tone: 'blue' },
+]
+
+export function getMother(id) {
+  return mothers.find((mother) => mother.id === id) || mothers[0]
+}
+
+export function getMotherVisits(id) {
+  return visits.filter((visit) => visit.motherId === id)
+}
