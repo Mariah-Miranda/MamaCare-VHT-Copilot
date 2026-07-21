@@ -1,12 +1,12 @@
 # MamaCare VHT Copilot
 
-> Helping Uganda's Village Health Teams provide better and safer antenatal care with AI-assisted pregnancy monitoring, voice documentation, translation, and timely referrals.
+> Helping Uganda's Village Health Teams provide safer antenatal care with structured pregnancy monitoring, local risk rules, Luganda support, and timely referrals.
 
 ## Project overview
 
 MamaCare VHT Copilot is a mobile-first maternal healthcare web application for Uganda's Village Health Teams (VHTs). It helps health workers register pregnant women, follow them throughout pregnancy, document antenatal visits, identify danger signs early, and connect high-risk women to professional care before complications become life-threatening.
 
-The application turns pregnancy records, symptoms, vital signs, danger signs, and voice observations into structured information that is easier for a VHT or supervising health worker to review and act on.
+The application turns pregnancy records, symptoms, vital signs, and danger signs into structured information that is easier for a VHT or supervising health worker to review and act on.
 
 MamaCare is a clinical decision-support tool. It does not diagnose patients or replace a qualified healthcare professional.
 
@@ -14,7 +14,7 @@ MamaCare is a clinical decision-support tool. It does not diagnose patients or r
 
 Many community health workers still depend on paper ANC cards, handwritten notes, and limited access to clinical support. Important information can be difficult to organize across visits, warning signs may be missed, and referrals may happen too late.
 
-MamaCare provides one secure workspace where health workers can maintain pregnancy records, receive safety-first AI guidance, and track visits and referrals.
+MamaCare provides one secure workspace where health workers can maintain pregnancy records, receive safety-first rule-based guidance, and track visits and referrals.
 
 ## Main features
 
@@ -30,7 +30,7 @@ MamaCare provides one secure workspace where health workers can maintain pregnan
 
 - Displays the current care-list totals and high-risk counts.
 - Provides empty-state guidance for a newly created workspace.
-- Links directly to mother registration, visit recording, visit history, and the AI Assistant.
+- Links directly to mother registration, visit recording, visit history, and the decision-support assistant.
 
 ### Mother registration and pregnancy records
 
@@ -43,30 +43,22 @@ MamaCare provides one secure workspace where health workers can maintain pregnan
 
 - Records blood pressure, weight, temperature, pulse, fetal movement, gestational age, urine protein, blood sugar, symptoms, and additional notes.
 - Lets the VHT select urgent danger signs such as severe headache, blurred vision, vaginal bleeding, convulsions, reduced fetal movement, severe abdominal pain, or loss of consciousness.
-- Saves the visit, AI assessment, risk level, and referral status as linked database records.
+- Saves the visit, structured assessment, risk level, and referral status as linked database records.
 
-### AI decision support
+### Local maternal-health decision support
 
-- Combines the mother's record, current vital signs, symptoms, observations, and danger signs.
+- Combines the mother's record, current vital signs, symptoms, observations, and danger signs using deterministic rules in the Express backend.
 - Returns a structured risk classification: Low, Moderate, or High.
 - Identifies possible conditions and recorded danger signs.
 - Provides immediate actions, referral guidance, counselling tips, a follow-up plan, a visit summary, and a confidence value.
 - Automatically records an urgent referral when the structured recommendation is `Immediate`.
 - Keeps the final decision with the VHT and supervising healthcare professional.
 
-### Voice observations
-
-- Records natural spoken observations in the browser.
-- Uses `gpt-4o-transcribe` to convert audio into reviewable text.
-- Preserves important maternal-health terms, names, numbers, blood-pressure readings, and gestational age where possible.
-- Returns the original transcription for the health worker to review before adding it to the visit.
-
 ### English and Luganda support
 
-- Translates interface content between English and Luganda.
-- Translates voice transcripts into the selected output language.
-- Preserves names, numbers, placeholders, acronyms, and medical units.
-- Caches completed interface-catalog translations in SQLite, with browser caching for the current interface, so identical catalog requests do not call the model again.
+- Switches interface content between the bundled English and Luganda catalogs.
+- Works immediately without a network request, API key, model call, or translation credits.
+- Falls back to English for any interface key that does not yet have a Luganda entry.
 
 ### Visit history and reports
 
@@ -74,27 +66,22 @@ MamaCare provides one secure workspace where health workers can maintain pregnan
 - Gives Supervisors a summary of registered mothers, visits, high-risk pregnancies, and referrals.
 - Generates reports from real database records rather than seeded demonstration data.
 
-## How OpenAI powers MamaCare
+## How Codex and GPT-5.6 were used
 
-MamaCare uses the official OpenAI Node.js SDK from the Express backend. The API key remains on the server and is never exposed to the browser.
+MamaCare was built with OpenAI Codex and GPT-5.6 as required by the hackathon. They were used during development to analyze the codebase, design the maternal-health workflow, implement features, debug failures, improve safety wording, and document the project.
 
-### GPT-5.6
+The deployed application does **not** call the OpenAI API. It requires no OpenAI API key or credits. Runtime maternal-health assessment is handled by transparent local rules in `server/assessment.js`, and interface language switching uses catalogs bundled in `src/i18n.jsx`.
 
-The project configures `gpt-5.6-terra` as its default GPT-5.6 model through `OPENAI_MODEL`. It is used for:
+### Local assessment behavior
 
-1. **Pregnancy risk assessment:** Converts symptoms, vital signs, pregnancy context, notes, and danger signs into a structured JSON assessment.
-2. **English/Luganda interface translation:** Translates interface content while preserving placeholders, acronyms, numbers, and medical units. Completed catalog translations are reused from a persistent cache.
-3. **AI Assistant:** Answers contextual questions about a registered mother's pregnancy record and presents safety-first next steps.
+- Evaluates blood-pressure thresholds, temperature, pulse, fetal movement, urine protein, blood sugar, selected danger signs, and recognized danger-sign phrases.
+- Returns the same predictable assessment structure used by visits and the decision-support assistant.
+- Prioritizes same-day clinical review when urgent rules are triggered.
+- Does not diagnose or replace a qualified health professional.
 
-The maternal-health system instruction and strict JSON Schema are defined in `server/index.js`. The instruction prioritizes safety, avoids diagnosing with certainty, and identifies urgent danger signs. Structured Outputs enforces the assessment fields, types, risk-level values, and confidence range.
+### Structured and reviewable output
 
-### GPT-4o Transcribe
-
-`gpt-4o-transcribe` converts field voice recordings into text. The transcription prompt provides maternal-health context and asks the model to preserve names, numbers, blood pressure, gestational age, symptoms, and English or Luganda words where possible.
-
-### Structured and reviewable AI output
-
-AI results are deliberately structured instead of being displayed as unrestricted chat. Assessments use strict JSON Schema output, making each result easier to validate, review, save, and use in referral workflows. All AI guidance is labelled as decision support and must be confirmed by a supervising health worker.
+Assessment results are deliberately structured instead of being displayed as unrestricted chat. This makes each result easier to validate, review, save, and use in referral workflows. All guidance is labelled as decision support and must be confirmed by a supervising health worker.
 
 ## How Codex was used
 
@@ -104,8 +91,8 @@ OpenAI Codex was used as the software-development collaborator for MamaCare. Cod
 - Build and refine the mobile-first user experience.
 - Implement account creation, login, token validation, protected routes, and logout behavior.
 - Remove prototype data and connect screens to authenticated API records.
-- Connect mother registration, visits, profiles, reports, and the AI Assistant to the Express and SQLite backend.
-- Implement and refine the OpenAI model calls, system instructions, structured responses, voice uploads, and cached translation workflows.
+- Connect mother registration, visits, profiles, reports, and the decision-support assistant to the Express and SQLite backend.
+- Convert the assessment design into a transparent local rule engine and bundle the Luganda interface catalog for zero-credit runtime operation.
 - Diagnose bugs, update project documentation, and run production builds to verify changes.
 
 Codex accelerated implementation and debugging, while product decisions, maternal-health goals, and final review remained human-led. Learn more from the [official Codex documentation](https://developers.openai.com/codex/).
@@ -119,8 +106,8 @@ Codex accelerated implementation and debugging, while product decisions, materna
 | Backend | Node.js, Express |
 | Database | SQLite with `better-sqlite3` |
 | Authentication | JWT and bcrypt |
-| File uploads | Multer with in-memory upload handling |
-| AI | OpenAI Node.js SDK, GPT-5.6, GPT-4o Transcribe |
+| Decision support | Local deterministic maternal-health rule engine |
+| Development tools | OpenAI Codex and GPT-5.6 |
 
 ## Application architecture
 
@@ -130,19 +117,14 @@ Browser (React/Vite)
         | Authenticated REST requests
         v
 Express API (Node.js)
-   |                |
-   |                +--> OpenAI API
-   |                     - assessments
-   |                     - translation
-   |                     - transcription
+   |-- local maternal-health rules
    v
 SQLite database
    - users
    - mothers
    - visits
-   - AI assessments
+   - structured assessments
    - referral history
-   - translation cache
 ```
 
 ## Project structure
@@ -150,7 +132,7 @@ SQLite database
 ```text
 MAMA CARE/
 ├── src/
-│   ├── components/       Reusable UI, layout, and voice tools
+│   ├── components/       Reusable UI and layout
 │   ├── lib/api.js        Authenticated frontend API client
 │   ├── pages/            Login, dashboard, mothers, visits, AI and reports
 │   ├── App.jsx           Session validation and application routes
@@ -158,7 +140,8 @@ MAMA CARE/
 │   └── styles.css        Application styling
 ├── server/
 │   ├── db.js             SQLite schema and database connection
-│   └── index.js          REST API, authentication and OpenAI integration
+│   ├── assessment.js     Local maternal-health decision rules
+│   └── index.js          REST API and authentication
 ├── .env.example          Environment-variable template
 ├── package.json          Dependencies and scripts
 └── vite.config.js        Vite configuration
@@ -170,7 +153,7 @@ MAMA CARE/
 
 - Node.js 18 or newer
 - npm
-- An OpenAI API key for live AI assessment, transcription, and translation
+- No OpenAI API key or API credits are required
 
 ### 1. Install dependencies
 
@@ -197,9 +180,6 @@ cp .env.example .env
 ```env
 PORT=8787
 JWT_SECRET=replace-with-a-long-random-secret
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_MODEL=gpt-5.6-terra
-OPENAI_TRANSCRIBE_MODEL=gpt-4o-transcribe
 VITE_API_URL=http://localhost:8787/api
 ```
 
@@ -276,31 +256,26 @@ The Express server serves both the built application and API from `http://localh
 | `GET` | `/api/mothers` | Retrieve authorized mother records |
 | `POST` | `/api/mothers` | Register a mother |
 | `GET` | `/api/visits` | Retrieve authorized visit records |
-| `POST` | `/api/visits` | Save a visit and AI assessment |
-| `POST` | `/api/ai/assess` | Generate structured decision support |
-| `POST` | `/api/ai/transcribe` | Transcribe and optionally translate audio |
-| `POST` | `/api/ai/translate-catalog` | Translate the interface catalog |
+| `POST` | `/api/visits` | Save a visit and structured assessment |
+| `POST` | `/api/assess` | Evaluate the local maternal-health rules |
 | `GET` | `/api/reports/summary` | Retrieve Supervisor reporting totals |
 
 Except for the health check, application endpoints require a valid bearer token. The reports endpoint additionally requires the `Supervisor` role.
 
 ## Data and security notes
 
-- The OpenAI API key is only initialized on the backend.
+- No patient information is sent to OpenAI or another model provider at runtime.
 - Passwords are stored as bcrypt hashes, not plain text.
 - JWTs expire after eight hours.
-- Uploaded audio is held in memory for request processing and is not written to an upload directory.
-- Upload size is limited to 12 MB.
 - SQLite files and local environment files are excluded from Git.
 - Production deployments must use a strong `JWT_SECRET`, HTTPS, appropriate database backups, access controls, and applicable health-data governance.
 
-## Responsible AI
+## Responsible decision support
 
 MamaCare is designed around human review:
 
-- The AI is instructed not to diagnose with certainty.
+- The local rule engine does not diagnose conditions with certainty.
 - Safety and urgent danger signs are prioritized.
-- Voice transcripts must be reviewed before use.
 - Clinical decisions and referrals remain the responsibility of trained health workers.
 
 ## Future roadmap
@@ -313,7 +288,6 @@ MamaCare is designed around human review:
 - Integrate with health facilities and approved national health-information systems.
 - Strengthen audit logging, consent workflows, and production-grade health-data protection.
 
-## OpenAI resources
+## Development resources
 
-- [OpenAI API documentation](https://developers.openai.com/api/)
 - [OpenAI Codex documentation](https://developers.openai.com/codex/)

@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Check, ChevronRight, CircleAlert, FileText, Headphones, HeartPulse, Info, Mic, Phone, Plus, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, CircleAlert, FileText, HeartPulse, Info, Phone, Plus, Sparkles, X } from 'lucide-react'
 import { careApi } from '../lib/api'
 import { assessmentApi } from '../lib/api'
 import { Avatar, PageHeader, Pill, RiskPill } from '../components/Layout'
 import { Button, Checkbox, EmptyState, Field, LoadingButton, Select, Textarea, useToast } from '../components/ui'
-import { ApiVoiceModal } from '../components/FieldAiTools'
 import { useLanguage } from '../i18n'
 
 const dangerSigns = ['Severe headache', 'Blurred vision', 'Vaginal bleeding', 'Convulsions', 'Reduced fetal movement', 'Severe abdominal pain', 'Loss of consciousness']
@@ -28,8 +27,6 @@ export default function NewVisit({ user, onSaved }) {
     }
   }, [availableMothers, params, selectedMother])
   const [selectedDanger, setSelectedDanger] = useState([])
-  const [voiceText, setVoiceText] = useState('')
-  const [voiceOpen, setVoiceOpen] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [assessment, setAssessment] = useState(null)
   const { toast, showToast, dismissToast } = useToast()
@@ -41,7 +38,7 @@ export default function NewVisit({ user, onSaved }) {
   function toggleDanger(item) { setSelectedDanger((current) => current.includes(item) ? current.filter((entry) => entry !== item) : [...current, item]) }
   async function analyze() {
     setAnalyzing(true)
-    const context = { mother: currentMother, vitals: { bloodPressure: form.bp, weight: form.weight, temperature: form.temperature, pulseRate: form.pulse, fetalMovement: form.fetalMovement, gestationalAge: form.gestation, urineProtein: form.urine, bloodSugar: form.sugar }, voiceObservations: voiceText, manualNotes: `${form.symptoms}\n${form.notes}`, dangerSigns: selectedDanger }
+    const context = { mother: currentMother, vitals: { bloodPressure: form.bp, weight: form.weight, temperature: form.temperature, pulseRate: form.pulse, fetalMovement: form.fetalMovement, gestationalAge: form.gestation, urineProtein: form.urine, bloodSugar: form.sugar }, manualNotes: `${form.symptoms}\n${form.notes}`, dangerSigns: selectedDanger }
     try {
       const response = await assessmentApi.analyze(context)
       const result = response.data.assessment
@@ -65,11 +62,10 @@ export default function NewVisit({ user, onSaved }) {
 
   return <div><div className="back-link-wrap"><button onClick={() => navigate(-1)}><ArrowLeft size={15} /> Back</button></div><PageHeader eyebrow={t('newVisit.eyebrow')} title={t('newVisit.title')} description={t('newVisit.description')} actions={<Pill tone="neutral"><span className="pill-dot pill-dot-green" />{t('newVisit.draftSaved')}</Pill>} />
     <div className="visit-layout"><div className="visit-main"><section className="form-card panel"><div className="form-section-title"><div className="section-icon"><HeartPulse size={17} /></div><div><h2>{t('newVisit.who')}</h2><p>{t('newVisit.whoDescription')}</p></div></div><label className="field"><span className="field-label">Mother <em>*</em></span><Select value={selectedMother} onChange={(value) => { setSelectedMother(value); setForm((current) => ({ ...current, gestation: String(availableMothers.find((item) => item.id === value)?.gestationalWeeks || '') })) }} options={availableMothers.map((item) => ({ value: item.id, label: `${item.name} · ${item.gestationalWeeks} weeks` }))} /></label><div className="selected-mother"><Avatar initials={currentMother.initials} color={currentMother.color} /><div><strong>{currentMother.name}</strong><span>{currentMother.age} years · {currentMother.village}</span></div><RiskPill level={currentMother.risk} /><Link to={`/mothers/${currentMother.id}`}>View profile <ChevronRight size={14} /></Link></div></section>
-      <section className="form-card panel"><div className="form-section-title"><div className="section-icon"><StethoscopeIcon /></div><div><h2>{t('newVisit.vitals')}</h2><p>{t('newVisit.vitalsDescription')}</p></div></div><div className="form-grid vitals-grid"><Field label="Blood pressure" value={form.bp} onChange={set('bp')} placeholder="e.g. 120/80" hint="mmHg" /><Field label="Weight" value={form.weight} onChange={set('weight')} placeholder="e.g. 62.5" hint="kg" /><Field label="Temperature" value={form.temperature} onChange={set('temperature')} placeholder="e.g. 36.7" hint="°C" /><Field label="Pulse rate" value={form.pulse} onChange={set('pulse')} placeholder="e.g. 78" hint="bpm" /><Field label="Gestational age" value={form.gestation} onChange={set('gestation')} placeholder="Weeks" hint="weeks" /><label className="field"><span className="field-label">Fetal movement</span><Select value={form.fetalMovement} onChange={set('fetalMovement')} options={['Normal', 'Reduced', 'Not yet felt']} /></label><label className="field"><span className="field-label">Urine protein</span><Select value={form.urine} onChange={set('urine')} options={['Negative', '+', '++', '+++']} /></label><Field label="Blood sugar" value={form.sugar} onChange={set('sugar')} placeholder="Optional" hint="mmol/L" /></div><div className="voice-strip"><div className="voice-strip-icon"><Headphones size={17} /></div><div><strong>{t('newVisit.voiceTitle')}</strong><span>{t('newVisit.voiceDescription')}</span></div><Button variant="secondary" icon={Mic} onClick={() => setVoiceOpen(true)}>{t('newVisit.useVoice')}</Button></div><div className="form-grid"><Textarea label={t('newVisit.symptoms')} value={form.symptoms} onChange={set('symptoms')} placeholder="What is the mother feeling today?" className="span-2" /><Textarea label={t('newVisit.notes')} value={form.notes} onChange={set('notes')} placeholder="Anything else worth carrying forward?" className="span-2" /></div></section>
+      <section className="form-card panel"><div className="form-section-title"><div className="section-icon"><StethoscopeIcon /></div><div><h2>{t('newVisit.vitals')}</h2><p>{t('newVisit.vitalsDescription')}</p></div></div><div className="form-grid vitals-grid"><Field label="Blood pressure" value={form.bp} onChange={set('bp')} placeholder="e.g. 120/80" hint="mmHg" /><Field label="Weight" value={form.weight} onChange={set('weight')} placeholder="e.g. 62.5" hint="kg" /><Field label="Temperature" value={form.temperature} onChange={set('temperature')} placeholder="e.g. 36.7" hint="°C" /><Field label="Pulse rate" value={form.pulse} onChange={set('pulse')} placeholder="e.g. 78" hint="bpm" /><Field label="Gestational age" value={form.gestation} onChange={set('gestation')} placeholder="Weeks" hint="weeks" /><label className="field"><span className="field-label">Fetal movement</span><Select value={form.fetalMovement} onChange={set('fetalMovement')} options={['Normal', 'Reduced', 'Not yet felt']} /></label><label className="field"><span className="field-label">Urine protein</span><Select value={form.urine} onChange={set('urine')} options={['Negative', '+', '++', '+++']} /></label><Field label="Blood sugar" value={form.sugar} onChange={set('sugar')} placeholder="Optional" hint="mmol/L" /></div><div className="form-grid"><Textarea label={t('newVisit.symptoms')} value={form.symptoms} onChange={set('symptoms')} placeholder="What is the mother feeling today?" className="span-2" /><Textarea label={t('newVisit.notes')} value={form.notes} onChange={set('notes')} placeholder="Anything else worth carrying forward?" className="span-2" /></div></section>
       <section className="form-card panel"><div className="form-section-title"><div className="section-icon section-icon-red"><CircleAlert size={17} /></div><div><h2>{t('newVisit.dangerSigns')}</h2><p>{t('newVisit.dangerSignsDescription')}</p></div></div><div className="danger-grid">{dangerSigns.map((sign) => <Checkbox key={sign} label={sign} checked={selectedDanger.includes(sign)} onChange={() => toggleDanger(sign)} tone="red" />)}</div>{selectedDanger.length > 0 && <div className="selected-warning"><CircleAlert size={16} /><span><strong>{selectedDanger.length} danger sign{selectedDanger.length > 1 ? 's' : ''} selected.</strong> The assessment will prioritise a safety-first recommendation.</span></div>}</section>
       <div className="visit-actions"><Button variant="ghost" onClick={() => navigate(-1)}>{t('newVisit.saveDraft')}</Button><LoadingButton loading={analyzing} icon={Sparkles} onClick={analyze}>{analyzing ? 'Building assessment…' : t('newVisit.analyze')}</LoadingButton></div>
     </div><aside className="visit-side"><div className="side-sticky"><section className="tool-card context-card"><div className="tool-card-top"><div className="tool-icon tool-icon-purple"><Sparkles size={19} /></div><span className="context-live"><i />{t('newVisit.liveContext')}</span></div><h3>{t('newVisit.contextTitle')}</h3><div className="context-list"><span><Check size={14} />{t('newVisit.motherProfile')}</span><span><Check size={14} />{t('newVisit.previousVisits')}</span><span><Check size={14} />{t('newVisit.todayVitals')}</span><span><Check size={14} />{t('newVisit.observations')}</span></div><p className="context-footnote"><Info size={13} />You stay in control of the final record.</p></section>{assessment && <AssessmentCard assessment={assessment} onSave={saveVisit} onDismiss={() => setAssessment(null)} />}</div></aside></div>
-    {voiceOpen && <ApiVoiceModal initialText={voiceText} onClose={() => setVoiceOpen(false)} onSave={(text) => { setVoiceText(text); setForm((current) => ({ ...current, symptoms: current.symptoms ? `${current.symptoms}\n${text}` : text })); setVoiceOpen(false); showToast({ title: 'AI voice note added', message: 'Review the transcription in the symptoms field before analyzing.' }) }} />}
     {toast && <div className="toast-wrap"><div className="toast toast-success"><div className="toast-check"><Check size={14} /></div><div><strong>{toast.title}</strong><span>{toast.message}</span></div><button onClick={dismissToast}><X size={15} /></button></div></div>}
   </div>
 }
@@ -79,48 +75,7 @@ function AssessmentCard({ assessment, onSave, onDismiss }) {
   return <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`assessment-card ${urgent ? 'urgent' : ''}`}><div className="assessment-top"><div className="assessment-top-label"><Sparkles size={15} /><span>Copilot assessment</span></div><button className="assessment-close" onClick={onDismiss}><X size={16} /></button></div>{urgent && <div className="urgent-banner"><CircleAlert size={18} /><div><strong>URGENT REFERRAL REQUIRED</strong><span>Nearest recommended care: Health Centre IV or hospital · {assessment.urgency}</span></div></div>}<div className="assessment-risk"><div><span>Risk level</span><strong>{assessment.risk}</strong></div><RiskPill level={assessment.risk} /><span className="confidence">{assessment.confidence}% confidence</span></div><div className="assessment-section"><span className="assessment-label">Possible condition</span><strong>{assessment.condition}</strong></div><div className="assessment-section"><span className="assessment-label">Danger signs identified</span><div className="assessment-tags">{assessment.signs.map((sign) => <span key={sign}>{sign}</span>)}</div></div><div className="assessment-section"><span className="assessment-label">Immediate actions</span><ul>{assessment.actions.map((action) => <li key={action}>{action}</li>)}</ul></div><div className="assessment-section"><span className="assessment-label">Referral recommendation</span><div className={`referral-recommendation ${urgent ? 'red' : ''}`}><ArrowUpIcon /><div><strong>{assessment.referral}</strong><span>{assessment.urgency}</span></div></div></div><div className="assessment-section"><span className="assessment-label">Counseling to share</span><p className="counseling">“Please rest, keep your phone close, and seek help straight away if the headache worsens or you notice changes in your vision.”</p></div><div className="assessment-summary"><FileText size={15} /><span>{assessment.summary}</span></div><div className="assessment-actions">{urgent && <Button variant="danger" icon={FileText} onClick={() => window.print()}>Generate referral note</Button>} {urgent && <Button variant="secondary" icon={Phone} onClick={() => alert('Supervisor call placeholder')}>Call supervisor</Button>}<Button onClick={onSave}>Review & save visit</Button></div><div className="ai-disclaimer"><ShieldIcon /> Decision support only. Confirm with your supervising health worker.</div></motion.section>
 }
 
-/* Legacy browser-only demo components kept out of the live flow.
-function VoiceModal({ onClose, onSave, initialText }) {
-  const [recording, setRecording] = useState(false)
-  const [processing, setProcessing] = useState(false)
-  const [text, setText] = useState(initialText)
-  const timer = useRef(null)
-  const recognitionRef = useRef(null)
-  function toggle() {
-    if (recording) {
-      recognitionRef.current?.stop()
-      setRecording(false)
-      setProcessing(true)
-      window.clearTimeout(timer.current)
-      timer.current = window.setTimeout(() => { setProcessing(false); setText((current) => current || 'The mother is 28 weeks pregnant and reports severe headache with blurred vision since this morning.') }, 700)
-      return
-    }
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      setRecording(true)
-      timer.current = window.setTimeout(() => { setRecording(false); setProcessing(false); setText((current) => current || 'The mother is 28 weeks pregnant and reports severe headache with blurred vision since this morning.') }, 1500)
-      return
-    }
-    const recognition = new SpeechRecognition()
-    recognition.lang = 'en-US'
-    recognition.interimResults = true
-    recognition.continuous = true
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results).map((result) => result[0].transcript).join(' ')
-      setText(transcript)
-    }
-    recognition.onerror = () => { setRecording(false); setProcessing(false) }
-    recognition.onend = () => setRecording(false)
-    recognitionRef.current = recognition
-    recognition.start()
-    setRecording(true)
-  }
-  return <Modal title="Voice observations" description="Speak naturally. You can edit the transcript before adding it to the visit." onClose={onClose} wide><div className={`voice-modal ${recording ? 'is-recording' : ''} ${processing ? 'is-processing' : ''}`}><div className="voice-visual"><div className="voice-pulse pulse-one" /><div className="voice-pulse pulse-two" /><button className="record-button" onClick={toggle}>{processing ? <LoaderIcon /> : recording ? <StopCircle size={26} /> : <Mic size={26} />}</button></div><div className="voice-status">{recording ? <><span className="live-dot" />Listening… speak clearly</> : processing ? 'Processing your voice note…' : text ? 'Transcript ready for review' : 'Tap the microphone to begin'}</div><Textarea label="Transcript" value={text} onChange={setText} placeholder="Your transcription will appear here" rows={5} /><div className="voice-language"><Volume2 size={14} />English & Luganda supported on compatible devices</div></div><div className="modal-actions"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={() => onSave(text)} disabled={!text}>Add to visit</Button></div></Modal>
-}
-
-*/
 function StethoscopeIcon() { return <span className="stethoscope-glyph">⌁</span> }
 function ArrowUpIcon() { return <ChevronRight size={16} /> }
-function LoaderIcon() { return <span className="spinner-ring" /> }
 function ShieldIcon() { return <ShieldCheckIcon /> }
 function ShieldCheckIcon() { return <span className="shield-mark">✦</span> }

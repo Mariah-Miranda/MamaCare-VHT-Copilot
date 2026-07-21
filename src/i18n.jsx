@@ -1,5 +1,4 @@
 import { createContext, useContext, useMemo, useState } from 'react'
-import { translationApi } from './lib/api'
 
 export const uiCatalog = {
   'brand.caption': 'VHT copilot',
@@ -8,7 +7,7 @@ export const uiCatalog = {
   'nav.mothers': 'Mothers',
   'nav.newVisit': 'New visit',
   'nav.visitHistory': 'Visit history',
-  'nav.assistant': 'AI assistant',
+  'nav.assistant': 'Decision assistant',
   'nav.reports': 'Reports',
   'nav.settings': 'Settings',
   'nav.logout': 'Log out',
@@ -27,7 +26,7 @@ export const uiCatalog = {
   'dashboard.highRisk': 'High-risk pregnancies',
   'dashboard.upcomingVisits': 'Upcoming visits',
   'dashboard.visitsToday': 'Visits today',
-  'dashboard.aiAssessments': 'AI assessments',
+  'dashboard.aiAssessments': 'Risk assessments',
   'dashboard.recentActivity': 'Recent activity',
   'dashboard.activityDescription': 'The latest updates from your care list',
   'dashboard.viewAll': 'View all',
@@ -72,9 +71,6 @@ export const uiCatalog = {
   'newVisit.whoDescription': 'Start with the mother’s record so previous context is included.',
   'newVisit.vitals': 'Vitals and observations',
   'newVisit.vitalsDescription': 'Record what you can see and measure today.',
-  'newVisit.voiceTitle': 'Prefer to speak your notes?',
-  'newVisit.voiceDescription': 'Use AI voice input in English or Luganda.',
-  'newVisit.useVoice': 'Use voice',
   'newVisit.symptoms': 'Symptoms reported',
   'newVisit.notes': 'Additional notes',
   'newVisit.dangerSigns': 'Danger signs',
@@ -88,9 +84,9 @@ export const uiCatalog = {
   'newVisit.todayVitals': 'Today’s vitals',
   'newVisit.observations': 'Your observations',
   'assistant.eyebrow': 'Decision support',
-  'assistant.title': 'AI assistant',
-  'assistant.description': 'Structured maternal care support, grounded in the context you already have.',
-  'assistant.online': 'Copilot online',
+  'assistant.title': 'Decision assistant',
+  'assistant.description': 'Structured maternal care support using transparent local rules.',
+  'assistant.online': 'Local rules ready',
   'reports.eyebrow': 'Supervisor overview',
   'reports.title': 'Reports & insights',
   'reports.description': 'A clear view of care coverage and where support is needed.',
@@ -99,45 +95,88 @@ export const uiCatalog = {
   'settings.description': 'Manage your profile, preferences and care workspace.',
   'language.english': 'English',
   'language.luganda': 'Luganda',
-  'language.switching': 'Translating…',
-  'language.translationError': 'Translation unavailable. Check your API key and try again.',
+  'language.switching': 'Switching…',
+  'language.translationError': 'Language unavailable.',
+}
+
+export const lgCatalog = {
+  'brand.caption': 'Omuyambi wa VHT',
+  'nav.workspace': 'Awakolerwa',
+  'nav.dashboard': 'Olupapula olukulu',
+  'nav.mothers': 'Abakyala',
+  'nav.newVisit': 'Okukyalira okupya',
+  'nav.visitHistory': 'Ebyafaayo by’okukyalira',
+  'nav.assistant': 'Omuyambi w’okusalawo',
+  'nav.reports': 'Lipoota',
+  'nav.settings': 'Enteekateeka',
+  'nav.logout': 'Fuluma',
+  'nav.beta': 'Kigezesebwa',
+  'nav.careConnected': 'Obujjanjabi bukwatagana',
+  'nav.syncedSecurely': 'Omulimu gwo guterekeddwa bulungi',
+  'nav.allChangesSaved': 'Enkyukakyuka zonna ziterekeddwa',
+  'dashboard.eyebrow': 'Okulaba obujjanjabi bw’abakyala ab’embuto',
+  'dashboard.greeting': 'Wasuze otya, {firstName}',
+  'dashboard.description': 'Laba embeera y’obujjanjabi mu kitundu kyo.',
+  'dashboard.recordVisit': 'Wandiika okukyalira',
+  'dashboard.totalMothers': 'Abakyala bonna',
+  'dashboard.highRisk': 'Embuto eziri mu bulabe',
+  'dashboard.upcomingVisits': 'Okukyalira okujja',
+  'dashboard.visitsToday': 'Okukyalira kwa leero',
+  'dashboard.aiAssessments': 'Okukebera obulabe',
+  'dashboard.recentActivity': 'Ebikoleddwa gye buvuddeko',
+  'dashboard.quickActions': 'Ebikolebwa amangu',
+  'dashboard.registerMother': 'Wandiisa omukyala',
+  'dashboard.askCopilot': 'Buuza omuyambi',
+  'mothers.title': 'Abakyala',
+  'mothers.description': 'Abakyala n’embuto z’olabirira.',
+  'mothers.register': 'Wandiisa omukyala',
+  'mothers.search': 'Noonya erinnya, ekyalo oba essimu',
+  'mothers.noResults': 'Tewali mukyala azuuliddwa',
+  'mothers.newTitle': 'Wandiisa omukyala',
+  'mothers.personalInfo': 'Ebimukwatako',
+  'mothers.pregnancyDetails': 'Ebikwata ku lubuto',
+  'mothers.healthContext': 'Embeera y’obulamu',
+  'profile.recordVisit': 'Wandiika okukyalira',
+  'newVisit.title': 'Wandiika okukyalira kwa ANC',
+  'newVisit.description': 'Wandiika ebikulu okusobola okukebera obulabe.',
+  'newVisit.who': 'Ani gw’okyalira?',
+  'newVisit.vitals': 'Ebipimo n’ebirabiddwa',
+  'newVisit.symptoms': 'Obubonero bw’alina',
+  'newVisit.notes': 'Ebirala eby’okuwandiika',
+  'newVisit.dangerSigns': 'Obubonero obw’obulabe',
+  'newVisit.saveDraft': 'Tereka nga tannamaliriza',
+  'newVisit.analyze': 'Kebera okukyalira kuno',
+  'newVisit.liveContext': 'Ebikozesebwa kati',
+  'newVisit.contextTitle': 'Omuyambi ky’akozesa',
+  'newVisit.motherProfile': 'Ebikwata ku mukyala',
+  'newVisit.previousVisits': 'Okukyalira okwayita',
+  'newVisit.todayVitals': 'Ebipimo bya leero',
+  'newVisit.observations': 'By’olabye',
+  'assistant.eyebrow': 'Obuyambi mu kusalawo',
+  'assistant.title': 'Omuyambi w’obujjanjabi',
+  'assistant.description': 'Okukebera obulabe nga kwesigamiziddwa ku byawandiikiddwa.',
+  'assistant.online': 'Omuyambi akola',
+  'reports.title': 'Lipoota n’okwekenneenya',
+  'settings.title': 'Enteekateeka',
+  'language.english': 'Olungereza',
+  'language.luganda': 'Luganda',
 }
 
 const LanguageContext = createContext(null)
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(() => localStorage.getItem('mamacare_language') || 'en')
-  const [translations, setTranslations] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('mamacare_translations') || '{}') } catch { return {} }
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
 
-  async function switchLanguage(nextLanguage) {
+  function switchLanguage(nextLanguage) {
     if (nextLanguage === language) return
-    setError('')
-    if (nextLanguage === 'en') {
-      setLanguage('en')
-      localStorage.setItem('mamacare_language', 'en')
-      return
-    }
-    setLoading(true)
-    try {
-      const response = await translationApi.catalog({ targetLanguage: 'Luganda', catalog: uiCatalog })
-      const nextTranslations = response.data.translations || {}
-      setTranslations(nextTranslations)
-      localStorage.setItem('mamacare_translations', JSON.stringify(nextTranslations))
-      setLanguage('lg')
-      localStorage.setItem('mamacare_language', 'lg')
-    } catch (requestError) {
-      setError(requestError.response?.data?.error || uiCatalog['language.translationError'])
-    } finally { setLoading(false) }
+    setLanguage(nextLanguage)
+    localStorage.setItem('mamacare_language', nextLanguage)
   }
 
-  const value = useMemo(() => ({ language, loading, error, switchLanguage, t: (key, fallback, variables = {}) => {
-    const template = language === 'lg' ? (translations[key] || uiCatalog[key] || fallback || key) : (uiCatalog[key] || fallback || key)
+  const value = useMemo(() => ({ language, loading: false, error: '', switchLanguage, t: (key, fallback, variables = {}) => {
+    const template = language === 'lg' ? (lgCatalog[key] || uiCatalog[key] || fallback || key) : (uiCatalog[key] || fallback || key)
     return Object.entries(variables).reduce((text, [name, replacement]) => text.replaceAll(`{${name}}`, replacement), template)
-  } }), [language, translations, loading, error])
+  } }), [language])
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }
