@@ -28,7 +28,6 @@ export const careApi = {
 export const assessmentApi = {
   analyze: (payload) => api.post('/ai/assess', payload),
   transcribe: (formData) => api.post('/ai/transcribe', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  scanAncCard: (formData) => api.post('/ai/anc-scan', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 }
 
 export const translationApi = {

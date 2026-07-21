@@ -81,6 +81,14 @@ db.exec(`
     notes TEXT,
     referred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS translation_cache (
+    cache_key TEXT PRIMARY KEY,
+    translation_type TEXT NOT NULL,
+    target_language TEXT NOT NULL,
+    source_text TEXT NOT NULL,
+    translated_text TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `)
 
 export default db

@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken'
 import OpenAI, { toFile } from 'openai'
 import multer from 'multer'
 import path from 'node:path'
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import db from './db.js'
 
@@ -51,14 +52,36 @@ function demoAssessment(context) {
   }
 }
 
+const assessmentSchema = {
+  name: 'maternal_health_assessment',
+  strict: true,
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      riskLevel: { type: 'string', enum: ['Low', 'Moderate', 'High'] },
+      possibleConditions: { type: 'array', items: { type: 'string' } },
+      dangerSignsIdentified: { type: 'array', items: { type: 'string' } },
+      explanation: { type: 'string' },
+      immediateActions: { type: 'array', items: { type: 'string' } },
+      referralRecommendation: { type: 'string' },
+      counselingTips: { type: 'array', items: { type: 'string' } },
+      followUpPlan: { type: 'string' },
+      visitSummary: { type: 'string' },
+      confidence: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    required: ['riskLevel', 'possibleConditions', 'dangerSignsIdentified', 'explanation', 'immediateActions', 'referralRecommendation', 'counselingTips', 'followUpPlan', 'visitSummary', 'confidence'],
+  },
+}
+
 async function assessWithAI(context) {
   if (!openai) return demoAssessment(context)
   const completion = await openai.chat.completions.create({
     model: process.env.OPENAI_MODEL || 'gpt-5.6-terra',
     temperature: 0.1,
-    response_format: { type: 'json_object' },
+    response_format: { type: 'json_schema', json_schema: assessmentSchema },
     messages: [
-      { role: 'system', content: 'You are an experienced maternal healthcare clinical decision support assistant for Uganda’s Village Health Teams. Follow WHO maternal health guidelines and Uganda Ministry of Health antenatal care recommendations where applicable. Never diagnose with certainty. Always prioritize patient safety. Clearly identify danger signs requiring urgent referral. Return JSON with riskLevel, possibleConditions, dangerSignsIdentified, explanation, immediateActions, referralRecommendation, counselingTips, followUpPlan, visitSummary, confidence.' },
+      { role: 'system', content: 'You are an experienced maternal healthcare clinical decision support assistant for Uganda’s Village Health Teams. Follow WHO maternal health guidelines and Uganda Ministry of Health antenatal care recommendations where applicable. Never diagnose with certainty. Always prioritize patient safety. Clearly identify danger signs requiring urgent referral.' },
       { role: 'user', content: JSON.stringify(context) },
     ],
   })
@@ -92,62 +115,57 @@ function parseJson(text) {
   return JSON.parse(jsonText)
 }
 
-async function extractAncCard(file) {
-  const dataUrl = `data:${file.mimetype || 'image/jpeg'};base64,${file.buffer.toString('base64')}`
-  const completion = await openai.chat.completions.create({
-    model: process.env.OPENAI_VISION_MODEL || 'gpt-5.6-terra',
-    temperature: 0,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: 'You are an OCR and data extraction assistant for Uganda antenatal care cards. Read only information visible in the image. Never invent missing values. Return valid JSON only.' },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: 'Extract the visible ANC card information into this JSON shape: {"motherName":null,"age":null,"gestationalAge":null,"lastAncVisit":null,"expectedDeliveryDate":null,"ancNumber":null,"healthFacility":null,"bloodGroup":null,"additionalInformation":[],"confidence":{"motherName":0,"age":0,"gestationalAge":0,"lastAncVisit":0,"expectedDeliveryDate":0,"ancNumber":0,"healthFacility":0,"bloodGroup":0},"overallConfidence":0}. Confidence values must be percentages from 0 to 100. Use null when a field is not legible or absent.' },
-          { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
-        ],
-      },
-    ],
-  })
-  const extracted = parseJson(completion.choices[0].message.content)
-  return {
-    motherName: extracted.motherName ?? null,
-    age: extracted.age ?? null,
-    gestationalAge: extracted.gestationalAge ?? null,
-    lastAncVisit: extracted.lastAncVisit ?? null,
-    expectedDeliveryDate: extracted.expectedDeliveryDate ?? null,
-    ancNumber: extracted.ancNumber ?? null,
-    healthFacility: extracted.healthFacility ?? null,
-    bloodGroup: extracted.bloodGroup ?? null,
-    additionalInformation: Array.isArray(extracted.additionalInformation) ? extracted.additionalInformation : [],
-    confidence: extracted.confidence || {},
-    overallConfidence: Number(extracted.overallConfidence || 0),
-  }
+const translationPromptVersion = 'v1'
+const pendingTranslations = new Map()
+
+function translationCacheKey(type, source, targetLanguage) {
+  return createHash('sha256').update(JSON.stringify([translationPromptVersion, type, targetLanguage.trim().toLowerCase(), source])).digest('hex')
+}
+
+async function cachedTranslation(type, source, targetLanguage, translate) {
+  const cacheKey = translationCacheKey(type, source, targetLanguage)
+  const cached = db.prepare('SELECT translated_text FROM translation_cache WHERE cache_key = ?').get(cacheKey)
+  if (cached) return cached.translated_text
+  if (pendingTranslations.has(cacheKey)) return pendingTranslations.get(cacheKey)
+
+  const pending = translate().then((translatedText) => {
+    db.prepare('INSERT OR IGNORE INTO translation_cache (cache_key, translation_type, target_language, source_text, translated_text) VALUES (?, ?, ?, ?, ?)').run(cacheKey, type, targetLanguage, source, translatedText)
+    return translatedText
+  }).finally(() => pendingTranslations.delete(cacheKey))
+  pendingTranslations.set(cacheKey, pending)
+  return pending
 }
 
 async function translateTextWithAI(text, targetLanguage) {
-  const completion = await openai.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-5.6-terra',
-    temperature: 0.1,
-    messages: [
-      { role: 'system', content: `You are a careful English to ${targetLanguage} translator for a maternal healthcare application used by Uganda Village Health Teams. Translate faithfully and naturally. Preserve names, numbers, medical units, placeholders such as {firstName}, and formatting. Do not add explanations.` },
-      { role: 'user', content: String(text || '') },
-    ],
+  const source = String(text || '')
+  return cachedTranslation('text', source, targetLanguage, async () => {
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-5.6-terra',
+      temperature: 0.1,
+      messages: [
+        { role: 'system', content: `You are a careful English to ${targetLanguage} translator for a maternal healthcare application used by Uganda Village Health Teams. Translate faithfully and naturally. Preserve names, numbers, medical units, placeholders such as {firstName}, and formatting. Do not add explanations.` },
+        { role: 'user', content: source },
+      ],
+    })
+    return completion.choices[0].message.content?.trim() || ''
   })
-  return completion.choices[0].message.content?.trim() || ''
 }
 
 async function translateCatalogWithAI(catalog, targetLanguage) {
-  const completion = await openai.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-5.6-terra',
-    temperature: 0.1,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: `You translate UI copy for a maternal healthcare application from English to ${targetLanguage}. Return one valid JSON object with exactly the same keys. Translate values naturally for Uganda VHTs. Preserve placeholders such as {firstName}, {count}, acronyms, numbers, and medical units. Do not translate names or product names.` },
-      { role: 'user', content: JSON.stringify(catalog) },
-    ],
+  const source = JSON.stringify(catalog)
+  const translatedText = await cachedTranslation('catalog', source, targetLanguage, async () => {
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-5.6-terra',
+      temperature: 0.1,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: `You translate UI copy for a maternal healthcare application from English to ${targetLanguage}. Return one valid JSON object with exactly the same keys. Translate values naturally for Uganda VHTs. Preserve placeholders such as {firstName}, {count}, acronyms, numbers, and medical units. Do not translate names or product names.` },
+        { role: 'user', content: source },
+      ],
+    })
+    return completion.choices[0].message.content?.trim() || '{}'
   })
-  const translated = parseJson(completion.choices[0].message.content)
+  const translated = parseJson(translatedText)
   return Object.fromEntries(Object.entries(catalog).map(([key, value]) => [key, translated[key] || value]))
 }
 
@@ -202,12 +220,6 @@ app.post('/api/ai/transcribe', auth(), upload.single('audio'), async (req, res) 
     const transcript = targetLanguage ? await translateTextWithAI(sourceTranscript, targetLanguage) : sourceTranscript
     res.json({ transcript, sourceTranscript, targetLanguage: targetLanguage || 'Original', model: process.env.OPENAI_TRANSCRIBE_MODEL || 'gpt-4o-transcribe' })
   } catch (error) { res.status(error?.status === 429 ? 429 : 502).json({ error: aiFailureMessage(error, 'Audio transcription failed. Please record a shorter, clearer note and try again.') }) }
-})
-
-app.post('/api/ai/anc-scan', auth(), upload.single('image'), async (req, res) => {
-  if (!requireOpenAI(res)) return
-  if (!req.file || !req.file.mimetype.startsWith('image/')) return res.status(400).json({ error: 'A card image is required.' })
-  try { res.json({ card: await extractAncCard(req.file), model: process.env.OPENAI_VISION_MODEL || 'gpt-5.6-terra' }) } catch (error) { res.status(502).json({ error: 'ANC card extraction failed. Use a clearer, well-lit image and try again.', detail: error.message }) }
 })
 
 app.post('/api/ai/translate', auth(), async (req, res) => {
