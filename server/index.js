@@ -136,21 +136,6 @@ async function cachedTranslation(type, source, targetLanguage, translate) {
   return pending
 }
 
-async function translateTextWithAI(text, targetLanguage) {
-  const source = String(text || '')
-  return cachedTranslation('text', source, targetLanguage, async () => {
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-5.6-terra',
-      temperature: 0.1,
-      messages: [
-        { role: 'system', content: `You are a careful English to ${targetLanguage} translator for a maternal healthcare application used by Uganda Village Health Teams. Translate faithfully and naturally. Preserve names, numbers, medical units, placeholders such as {firstName}, and formatting. Do not add explanations.` },
-        { role: 'user', content: source },
-      ],
-    })
-    return completion.choices[0].message.content?.trim() || ''
-  })
-}
-
 async function translateCatalogWithAI(catalog, targetLanguage) {
   const source = JSON.stringify(catalog)
   const translatedText = await cachedTranslation('catalog', source, targetLanguage, async () => {
@@ -215,18 +200,9 @@ app.post('/api/ai/transcribe', auth(), upload.single('audio'), async (req, res) 
   if (!requireOpenAI(res)) return
   if (!req.file) return res.status(400).json({ error: 'An audio recording is required.' })
   try {
-    const sourceTranscript = await transcribeAudio(req.file)
-    const targetLanguage = req.body?.targetLanguage
-    const transcript = targetLanguage ? await translateTextWithAI(sourceTranscript, targetLanguage) : sourceTranscript
-    res.json({ transcript, sourceTranscript, targetLanguage: targetLanguage || 'Original', model: process.env.OPENAI_TRANSCRIBE_MODEL || 'gpt-4o-transcribe' })
+    const transcript = await transcribeAudio(req.file)
+    res.json({ transcript, model: process.env.OPENAI_TRANSCRIBE_MODEL || 'gpt-4o-transcribe' })
   } catch (error) { res.status(error?.status === 429 ? 429 : 502).json({ error: aiFailureMessage(error, 'Audio transcription failed. Please record a shorter, clearer note and try again.') }) }
-})
-
-app.post('/api/ai/translate', auth(), async (req, res) => {
-  if (!requireOpenAI(res)) return
-  const { text, targetLanguage = 'Luganda' } = req.body || {}
-  if (!text) return res.status(400).json({ error: 'Text to translate is required.' })
-  try { res.json({ translation: await translateTextWithAI(text, targetLanguage), targetLanguage }) } catch (error) { res.status(error?.status === 429 ? 429 : 502).json({ error: aiFailureMessage(error, 'Translation failed. Please try again.') }) }
 })
 
 app.post('/api/ai/translate-catalog', auth(), async (req, res) => {

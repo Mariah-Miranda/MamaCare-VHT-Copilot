@@ -59,14 +59,14 @@ MamaCare provides one secure workspace where health workers can maintain pregnan
 - Records natural spoken observations in the browser.
 - Uses `gpt-4o-transcribe` to convert audio into reviewable text.
 - Preserves important maternal-health terms, names, numbers, blood-pressure readings, and gestational age where possible.
-- Can translate the transcript into English or Luganda before it is added to the visit.
+- Returns the original transcription for the health worker to review before adding it to the visit.
 
 ### English and Luganda support
 
 - Translates interface content between English and Luganda.
 - Translates voice transcripts into the selected output language.
 - Preserves names, numbers, placeholders, acronyms, and medical units.
-- Caches completed text and catalog translations in SQLite, with browser caching for the current interface, so identical translation requests do not call the model again.
+- Caches completed interface-catalog translations in SQLite, with browser caching for the current interface, so identical catalog requests do not call the model again.
 
 ### Visit history and reports
 
@@ -83,7 +83,7 @@ MamaCare uses the official OpenAI Node.js SDK from the Express backend. The API 
 The project configures `gpt-5.6-terra` as its default GPT-5.6 model through `OPENAI_MODEL`. It is used for:
 
 1. **Pregnancy risk assessment:** Converts symptoms, vital signs, pregnancy context, notes, and danger signs into a structured JSON assessment.
-2. **English/Luganda translation:** Translates interface content and clinical notes while preserving medical measurements and formatting. Completed translations are reused from a persistent cache.
+2. **English/Luganda interface translation:** Translates interface content while preserving placeholders, acronyms, numbers, and medical units. Completed catalog translations are reused from a persistent cache.
 3. **AI Assistant:** Answers contextual questions about a registered mother's pregnancy record and presents safety-first next steps.
 
 The maternal-health system instruction and strict JSON Schema are defined in `server/index.js`. The instruction prioritizes safety, avoids diagnosing with certainty, and identifies urgent danger signs. Structured Outputs enforces the assessment fields, types, risk-level values, and confidence range.
@@ -279,7 +279,6 @@ The Express server serves both the built application and API from `http://localh
 | `POST` | `/api/visits` | Save a visit and AI assessment |
 | `POST` | `/api/ai/assess` | Generate structured decision support |
 | `POST` | `/api/ai/transcribe` | Transcribe and optionally translate audio |
-| `POST` | `/api/ai/translate` | Translate a text value |
 | `POST` | `/api/ai/translate-catalog` | Translate the interface catalog |
 | `GET` | `/api/reports/summary` | Retrieve Supervisor reporting totals |
 

@@ -31,7 +31,6 @@ export const assessmentApi = {
 }
 
 export const translationApi = {
-  text: (payload) => api.post('/ai/translate', payload),
   catalog: (payload) => api.post('/ai/translate-catalog', payload),
 }
 
