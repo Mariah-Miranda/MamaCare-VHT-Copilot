@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Camera, Check, ChevronRight, CircleAlert, FileText, Headphones, HeartPulse, Info, Mic, Pause, Phone, Play, Plus, ScanLine, Sparkles, StopCircle, Upload, Volume2, X } from 'lucide-react'
-import { isDemoAccount, mothers } from '../data'
+import { careApi } from '../lib/api'
 import { assessmentApi } from '../lib/api'
 import { Avatar, PageHeader, Pill, RiskPill } from '../components/Layout'
 import { Button, Checkbox, EmptyState, Field, LoadingButton, Modal, Select, Textarea, useToast } from '../components/ui'
@@ -13,12 +13,20 @@ const dangerSigns = ['Severe headache', 'Blurred vision', 'Vaginal bleeding', 'C
 
 export default function NewVisit({ user, onSaved }) {
   const [params] = useSearchParams()
-  const availableMothers = isDemoAccount(user) ? mothers : []
+  const [availableMothers, setAvailableMothers] = useState([])
+  useEffect(() => { careApi.mothers().then(({ data }) => setAvailableMothers((data.mothers || []).map((item) => { const name = item.full_name || ''; return { id: String(item.id), name, age: item.age, village: item.village || '', gestationalWeeks: item.weeks_pregnant || 0, risk: 'Low', initials: name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase(), color: 'teal' } }))).catch(() => setAvailableMothers([])) }, [])
   const motherId = params.get('mother') || availableMothers[0]?.id || ''
   const mother = availableMothers.find((item) => item.id === motherId) || availableMothers[0] || { id: '', name: '', age: '', village: '', gestationalWeeks: 0, risk: 'Low', initials: '', color: 'teal' }
   const navigate = useNavigate()
   const [selectedMother, setSelectedMother] = useState(mother.id)
   const [form, setForm] = useState({ bp: '', weight: '', temperature: '', pulse: '', fetalMovement: 'Normal', gestation: String(mother.gestationalWeeks), symptoms: '', urine: 'Negative', sugar: '', notes: '' })
+  useEffect(() => {
+    if (!selectedMother && availableMothers.length) {
+      const first = availableMothers.find((item) => item.id === params.get('mother')) || availableMothers[0]
+      setSelectedMother(first.id)
+      setForm((current) => ({ ...current, gestation: String(first.gestationalWeeks || '') }))
+    }
+  }, [availableMothers, params, selectedMother])
   const [selectedDanger, setSelectedDanger] = useState([])
   const [voiceText, setVoiceText] = useState('')
   const [voiceOpen, setVoiceOpen] = useState(false)
@@ -45,7 +53,14 @@ export default function NewVisit({ user, onSaved }) {
       setAssessment({ risk: high ? 'High' : selectedDanger.length ? 'Moderate' : 'Low', condition: high ? 'Possible gestational hypertension' : selectedDanger.length ? 'Needs closer observation' : 'No immediate concerns identified', signs: selectedDanger.length ? selectedDanger : ['No danger signs selected'], actions: high ? ['Refer immediately to the nearest Health Centre IV or hospital', 'Repeat blood pressure after 15 minutes if safe to do so', 'Contact the supervising midwife'] : ['Continue routine ANC monitoring', 'Reinforce medication and nutrition guidance'], referral: high ? 'Immediate' : 'Routine follow-up', urgency: high ? 'Immediate' : 'Next scheduled ANC visit', confidence: high ? 94 : 88, summary: high ? `${currentMother.name} has a combination of findings that require prompt clinical review. Support referral today and keep the mother accompanied.` : `${currentMother.name} appears stable based on the information recorded. Continue routine monitoring and provide clear return precautions.` })
     } finally { setAnalyzing(false) }
   }
-  function saveVisit() { showToast({ title: 'Visit saved', message: `${currentMother.name}’s visit and assessment were added to the record.` }); if (onSaved) onSaved(); }
+  async function saveVisit() {
+    try {
+      await careApi.saveVisit({ motherId: Number(currentMother.id), bloodPressure: form.bp, weight: Number(form.weight || 0), temperature: Number(form.temperature || 0), pulseRate: Number(form.pulse || 0), fetalMovement: form.fetalMovement, gestationalAge: Number(form.gestation || 0), symptoms: form.symptoms, urineProtein: form.urine, bloodSugar: Number(form.sugar || 0), notes: form.notes, dangerSigns: selectedDanger, assessment: { riskLevel: assessment.risk, possibleConditions: [assessment.condition], dangerSignsIdentified: assessment.signs, immediateActions: assessment.actions, referralRecommendation: assessment.referral, counselingTips: [], followUpPlan: assessment.urgency, visitSummary: assessment.summary, confidence: assessment.confidence / 100 } })
+      showToast({ title: 'Visit saved', message: `${currentMother.name}’s visit and assessment were added to the record.` })
+      if (onSaved) onSaved()
+      navigate('/visits')
+    } catch (error) { showToast({ title: 'Visit not saved', message: error.response?.data?.error || 'Check your connection and try again.' }) }
+  }
 
   if (!availableMothers.length) return <div><div className="back-link-wrap"><button onClick={() => navigate(-1)}><ArrowLeft size={15} /> Back</button></div><PageHeader eyebrow={t('newVisit.eyebrow')} title={t('newVisit.title')} description={t('newVisit.description')} /><section className="panel empty-state"><EmptyState icon={HeartPulse} title="Register a mother first" description="A new visit needs a mother’s record before you can add observations." action={<Link to="/mothers/new"><Button icon={Plus}>Register mother</Button></Link>} /></section></div>
 

@@ -49,7 +49,7 @@ export default function Settings({ user }) {
 
         {activeTab === 'workspace' && <section className="panel settings-card">
           <div className="settings-heading"><div><h2>Workspace preferences</h2><p>Manage the language and local care workspace used by this device.</p></div><SlidersHorizontal size={18} className="muted-icon" /></div>
-          <div className="form-grid"><label className="field"><span className="field-label">Interface language</span><Select value={language} onChange={switchLanguage} options={[{ value: 'en', label: 'English' }, { value: 'lg', label: 'Luganda' }]} /></label><Field label="Assigned workspace" value={user.village || 'Kanyanya Parish'} onChange={() => {}} /></div>
+          <div className="form-grid"><label className="field"><span className="field-label">Interface language</span><Select value={language} onChange={switchLanguage} options={[{ value: 'en', label: 'English' }, { value: 'lg', label: 'Luganda' }]} /></label><Field label="Assigned workspace" value={user.village || 'Not assigned'} onChange={() => {}} /></div>
           <div className="info-card workspace-info"><strong>{loading ? 'Translating workspace…' : 'Language changes apply across MamaCare.'}</strong><p>Choose English or Luganda. The selected language is saved on this device.</p></div>
         </section>}
       </main>

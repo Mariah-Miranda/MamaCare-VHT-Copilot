@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowUpRight, CalendarDays, ChevronRight, CircleAlert, ClipboardCheck, Clock3, FilePlus2, HeartPulse, Plus, ShieldAlert, Sparkles, UserRoundPlus, Users, UsersRound } from 'lucide-react'
-import { activity, isDemoAccount, mothers } from '../data'
+import { careApi } from '../lib/api'
 import { Avatar, PageHeader, Pill, RiskPill } from '../components/Layout'
 import { Button, EmptyState, StatCard } from '../components/ui'
 import { useLanguage } from '../i18n'
@@ -10,9 +11,10 @@ const stagger = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, trans
 
 export default function Dashboard({ user }) {
   const { t } = useLanguage()
-  const demo = isDemoAccount(user)
-  const visibleMothers = demo ? mothers : []
-  const visibleActivity = demo ? activity : []
+  const demo = false
+  const [visibleMothers, setVisibleMothers] = useState([])
+  const visibleActivity = []
+  useEffect(() => { careApi.mothers().then(({ data }) => setVisibleMothers((data.mothers || []).map((item) => ({ id: String(item.id), name: item.full_name, gestationalWeeks: item.weeks_pregnant || 0, risk: 'Low', initials: item.full_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase(), color: 'teal' })))).catch(() => setVisibleMothers([])) }, [])
   const highRisk = visibleMothers.filter((mother) => mother.risk === 'High').length
   const hasData = visibleMothers.length > 0
   return <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: .06 } } }}>

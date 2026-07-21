@@ -2,14 +2,13 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight, Eye, EyeOff, HeartPulse, LockKeyhole, Mail, MapPin, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
 import { Button, Select } from '../components/ui'
-import { demoUser } from '../data'
 import { authApi } from '../lib/api'
 
 export default function Login({ onLogin }) {
-  const [mode, setMode] = useState('signin')
+  const [mode, setMode] = useState('register')
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('sarah.namusoke@mamacare.org')
-  const [password, setPassword] = useState('mamacare-demo')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [role, setRole] = useState('VHT')
   const [village, setVillage] = useState('')
@@ -28,8 +27,8 @@ export default function Login({ onLogin }) {
       setConfirmPassword('')
       setVillage('')
     } else {
-      setEmail('sarah.namusoke@mamacare.org')
-      setPassword('mamacare-demo')
+      setEmail('')
+      setPassword('')
       setConfirmPassword('')
     }
   }
@@ -53,8 +52,7 @@ export default function Login({ onLogin }) {
         : await authApi.login({ email, password })
       completeLogin(response)
     } catch (requestError) {
-      if (!isRegister && email === demoUser.email && password === 'mamacare-demo') onLogin({ ...demoUser, email })
-      else setError(requestError.response?.data?.error || (isRegister ? 'Unable to create your account right now. Check your connection and try again.' : 'Unable to sign in right now. Check your connection and try again.'))
+      setError(requestError.response?.data?.error || (isRegister ? 'Unable to create your account right now. Check your connection and try again.' : 'Unable to sign in right now. Check your connection and try again.'))
     } finally { setLoading(false) }
   }
 

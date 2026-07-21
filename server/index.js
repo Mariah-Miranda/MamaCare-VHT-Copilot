@@ -16,10 +16,6 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } })
 
-if (!db.prepare('SELECT id FROM users WHERE email = ?').get('sarah.namusoke@mamacare.org')) {
-  db.prepare('INSERT INTO users (name, email, password_hash, role, village) VALUES (?, ?, ?, ?, ?)').run('Sarah Namusoke', 'sarah.namusoke@mamacare.org', bcrypt.hashSync('mamacare-demo', 12), 'VHT', 'Kanyanya Parish')
-}
-
 app.use(cors())
 app.use(express.json({ limit: '8mb' }))
 

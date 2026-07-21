@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarDays, ChevronRight, CircleAlert, FileSearch, Filter, SlidersHorizontal } from 'lucide-react'
-import { isDemoAccount, visits } from '../data'
+import { careApi } from '../lib/api'
 import { Avatar, PageHeader, RiskPill } from '../components/Layout'
 import { Button, EmptyState, SearchBox, Select } from '../components/ui'
 import { useLanguage } from '../i18n'
@@ -11,7 +11,13 @@ export default function Visits({ user }) {
   const [search, setSearch] = useState('')
   const [risk, setRisk] = useState('')
   const [referral, setReferral] = useState('')
-  const visibleVisits = isDemoAccount(user) ? visits : []
+  const [visibleVisits, setVisibleVisits] = useState([])
+  useEffect(() => { careApi.visits().then(({ data }) => setVisibleVisits((data.visits || []).map(mapVisit))).catch(() => setVisibleVisits([])) }, [])
   const filtered = useMemo(() => visibleVisits.filter((visit) => `${visit.mother} ${visit.assessment} ${visit.symptoms}`.toLowerCase().includes(search.toLowerCase()) && (!risk || visit.risk === risk) && (!referral || visit.referral === referral)), [visibleVisits, search, risk, referral])
   return <div><PageHeader eyebrow="Care records" title={t('nav.visitHistory')} description="A searchable record of every antenatal visit and assessment." actions={<Link to="/visits/new"><Button>{t('dashboard.recordVisit')}</Button></Link>} /><div className="history-summary"><div><span>All visits</span><strong>{visibleVisits.length}</strong><small>{visibleVisits.length ? '+6 this month' : 'No visits yet'}</small></div><div><span>High-risk visits</span><strong className="red-text">{visibleVisits.filter((visit) => visit.risk === 'High').length}</strong><small>Needs follow-up</small></div><div><span>Referrals</span><strong>{visibleVisits.filter((visit) => visit.referral === 'Referred').length}</strong><small>Pending review</small></div><div><span>AI assessed</span><strong>{visibleVisits.length}</strong><small>{visibleVisits.length ? 'Recorded assessments' : 'No assessments yet'}</small></div></div><div className="list-toolbar history-toolbar"><SearchBox value={search} onChange={setSearch} placeholder="Search visits, mothers or notes" /><Select value={risk} onChange={setRisk} options={['High', 'Moderate', 'Low']} placeholder="All risk levels" /><Select value={referral} onChange={setReferral} options={['Referred', 'Routine']} placeholder="Referral status" /><button className="date-filter"><CalendarDays size={16} /> Last 30 days</button><button className="icon-button filter-icon"><SlidersHorizontal size={17} /></button></div><section className="panel history-panel"><div className="table-header history-header"><span>Visit</span><span>Vital signs</span><span>AI assessment</span><span>Referral</span><span /></div>{filtered.map((visit) => <Link to={`/mothers/${visit.motherId}`} className="history-row" key={visit.id}><div className="history-visit"><Avatar initials={visit.initials} color={visit.risk === 'High' ? 'coral' : visit.risk === 'Moderate' ? 'lilac' : 'mint'} /><div><strong>{visit.mother}</strong><span>{visit.date} · {visit.gestation}</span><small>{visit.symptoms}</small></div></div><div className="vitals-inline"><span><b>BP</b>{visit.bp}</span><span><b>Pulse</b>{visit.pulse}</span><span><b>Weight</b>{visit.weight}</span></div><div className="assessment-inline"><RiskPill level={visit.risk} /><span>{visit.assessment}</span></div><div className={`referral-status ${visit.referral === 'Referred' ? 'referred' : ''}`}>{visit.referral === 'Referred' && <CircleAlert size={14} />}{visit.referral}</div><ChevronRight size={17} className="row-chevron" /></Link>)}{filtered.length === 0 && <EmptyState icon={FileSearch} title="No visits match" description="Try a different search or filter." />}</section><div className="list-footer"><span><span className="footer-dot" />All records are securely synced</span><span>Showing {filtered.length} of {visibleVisits.length} visits</span></div></div>
+}
+
+function mapVisit(item) {
+  const name = item.mother_name || ''
+  return { id: String(item.id), motherId: String(item.mother_id), mother: name, date: new Date(item.visit_date).toLocaleDateString(), gestation: `${item.gestational_age || 0}w`, bp: item.blood_pressure || '—', pulse: item.pulse_rate ? `${item.pulse_rate} bpm` : '—', weight: item.weight ? `${item.weight} kg` : '—', risk: item.risk_level || 'Low', assessment: item.risk_level ? `${item.risk_level} risk assessment` : 'Not assessed', referral: item.referral_status || 'Routine', symptoms: item.symptoms || 'No symptoms recorded', initials: name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase() }
 }

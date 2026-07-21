@@ -17,6 +17,14 @@ export const authApi = {
   me: () => api.get('/auth/me'),
 }
 
+export const careApi = {
+  mothers: () => api.get('/mothers'),
+  registerMother: (payload) => api.post('/mothers', payload),
+  visits: () => api.get('/visits'),
+  saveVisit: (payload) => api.post('/visits', payload),
+  reportSummary: () => api.get('/reports/summary'),
+}
+
 export const assessmentApi = {
   analyze: (payload) => api.post('/ai/assess', payload),
   transcribe: (formData) => api.post('/ai/transcribe', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
