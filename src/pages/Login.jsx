@@ -62,7 +62,7 @@ export default function Login({ onLogin }) {
     <div className="login-visual"><div className="login-visual-inner">
       <div className="brand-lockup login-brand"><div className="brand-mark"><HeartPulse size={20} strokeWidth={2.5} /></div><div><div className="brand-name">MamaCare</div><div className="brand-caption">VHT copilot</div></div></div>
       <div className="visual-copy"><div className="mini-kicker"><Sparkles size={13} /> Care, connected</div><h1>More confidence<br /><span>in every visit.</span></h1><p>A calm, intelligent workspace for the people who care for mothers first.</p></div>
-      <div className="care-illustration"><div className="illustration-glow" /><div className="illustration-circle"><HeartPulse size={72} strokeWidth={1.1} /></div><div className="float-card float-card-top"><ShieldCheck size={16} /><span>Care team synced</span><i /></div><div className="float-card float-card-bottom"><div className="mini-avatar">AN</div><div><strong>Amina Nakato</strong><span>Visit assessed · 2 min ago</span></div><div className="mini-check">✓</div></div></div>
+      <div className="care-illustration"><div className="illustration-glow" /><div className="illustration-circle"><HeartPulse size={72} strokeWidth={1.1} /></div></div>
       <div className="login-quote"><span>“</span><p>When information is clear, I can focus on what matters most — the mother in front of me.</p><small>Sarah · Village Health Team, Kampala</small></div>
     </div></div>
 
@@ -80,7 +80,6 @@ export default function Login({ onLogin }) {
       </form>
       <div className="login-switch"><span>{isRegister ? 'Already have an account?' : 'New to MamaCare?'}</span><button type="button" className="text-button" onClick={() => switchMode(isRegister ? 'signin' : 'register')}>{isRegister ? 'Sign in' : 'Create an account'}</button></div>
       <div className="login-footer"><ShieldCheck size={15} /><span>Your data is encrypted and securely stored</span></div>
-      {!isRegister && <div className="demo-note"><strong>Demo workspace</strong><span>Use the pre-filled details to explore MamaCare.</span></div>}
-    </div><div className="login-bottom"><span>© 2025 MamaCare</span><span>Help center</span><span>Privacy</span></div></div>
+    </div></div>
   </div>
 }
